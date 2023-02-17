@@ -46,6 +46,10 @@ public class Node {
         return acceptingState;
     }
 
+    public void setAcceptingState(boolean acceptingState) {
+        this.acceptingState = acceptingState;
+    }
+
     public int getId() {
         return id;
     }

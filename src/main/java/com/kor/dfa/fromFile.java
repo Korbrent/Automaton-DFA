@@ -29,6 +29,7 @@ public class fromFile {
         ArrayList<Node> nodes = new ArrayList<>(); // All the nodes in the DFA
         Node startNode = null; // The start node of the DFA
 
+        String alphabet = null; // The alphabet of the DFA
         // Read in the nodes
         while (in.hasNextLine()){
             String line = in.nextLine();
@@ -36,6 +37,10 @@ public class fromFile {
             // Ignore comments and empty lines
             if(line.startsWith("#") || line.startsWith("/") || line.isEmpty()){
                 continue;
+            }
+
+            if (line.startsWith("Alphabet=")) {
+                alphabet = line.substring(9);
             }
 
             // Get the start ID
@@ -58,6 +63,10 @@ public class fromFile {
             }
         }
 
-        return new DFA(startNode, nodes);
+        if(alphabet == null){
+            return new DFA(startNode, nodes);
+        } else {
+            return new DFA(startNode, nodes, alphabet);
+        }
     }
 }

@@ -19,6 +19,8 @@ public class DFA {
     private final Node startNode; // The start node of the DFA
     private Node currentNode; // The current node of the DFA
     private final ArrayList<Node> nodes; // All the nodes in the DFA, only used for writing to file
+    private final ArrayList<Node> acceptingStates; // All the accepting states in the DFA
+    private String alphabet = "abcdefghijklmnopqrstuvwxyz"; // The alphabet of the DFA
 
     /**
      * Creates a new DFA
@@ -28,6 +30,25 @@ public class DFA {
         this.startNode = startNode;
         this.currentNode = startNode;
         this.nodes = nodes;
+        this.acceptingStates = new ArrayList<>();
+        for(Node node : nodes){
+            if(node.isAcceptingState()){
+                acceptingStates.add(node);
+            }
+        }
+    }
+
+    public DFA(Node startNode, ArrayList<Node> nodes, String alphabet) {
+        this.startNode = startNode;
+        this.currentNode = startNode;
+        this.nodes = nodes;
+        this.acceptingStates = new ArrayList<>();
+        for(Node node : nodes){
+            if(node.isAcceptingState()){
+                acceptingStates.add(node);
+            }
+        }
+        this.alphabet = alphabet;
     }
 
     /**
@@ -44,6 +65,14 @@ public class DFA {
      */
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getAlphabet() {
+        return alphabet;
+    }
+
+    public void setAlphabet(String alphabet) {
+        this.alphabet = alphabet;
     }
 
     /**
@@ -81,6 +110,22 @@ public class DFA {
      */
     public Node getCurrentNode() {
         return currentNode;
+    }
+
+    /**
+     * Get the accepting states
+     * @return The accepting states
+     */
+    public ArrayList<Node> getAcceptingStates() {
+        return acceptingStates;
+    }
+
+    /**
+     * Get the
+     * @return
+     */
+    public ArrayList<Node> getNodes() {
+        return nodes;
     }
 
     /**
@@ -129,6 +174,7 @@ public class DFA {
         StringBuilder fileContents = new StringBuilder();
 
         // Write the first line of the file
+        fileContents.append("Alphabet=").append(alphabet).append("\n");
         fileContents.append("StartID=").append(startNode.getId()).append("\n");
 
         ArrayList<Pointers> pointers = new ArrayList<>();

@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Scanner;
 
-public class Main {
+public class DFAController {
     private static final ArrayList<DFA> DFAs = new ArrayList<>(); // All DFAs created
     private static DFA activeDFA = null; // The DFA that is currently being worked on
 
@@ -78,14 +78,15 @@ public class Main {
                     "[4] Step-by-step a DFA\n" +
 //                    "[] Minimize a DFA\n" +
                     "[5] Export DFA to file\n" +
-                    "[6] Exit the DFA Menu\n" +
+                    "[6] Modify a DFA\n" +
+                    "[7] Exit the DFA Menu\n" +
                     "Enter your choice. ");
 
             String input = in.nextLine();
             int choice = Integer.parseInt(input);
 
             switch (choice) {
-                case 1:
+                case 1 -> {
                     // Create a DFA
                     DFA dfa = createDFA();
                     if (dfa != null) {
@@ -96,23 +97,17 @@ public class Main {
                     } else {
                         System.out.println("DFA creation failed.");
                     }
-                    break;
-
-                case 2:
+                }
+                case 2 ->
                     // Set active DFA
-                    setDFA();
-                    break;
-
-                case 3:
+                        setDFA();
+                case 3 ->
                     // Evaluate a string against a DFA
-                    evalDFA();
-                    break;
-
-                case 4:
+                        evalDFA();
+                case 4 ->
                     // Step-by-step a DFA
-                    stepDFA();
-                    break;
-                case 5:
+                        stepDFA();
+                case 5 -> {
                     // Export DFA to file
                     System.out.println("Enter the path to the file you want to save to. ");
                     input = in.nextLine();
@@ -121,12 +116,14 @@ public class Main {
                     } catch (IOException e) {
                         System.out.println("Error writing to file.");
                     }
-                    break;
-                case 6:
+                }
+                case 6 -> // Modify a DFA
+                        dfaModifyMenu();
+                case 7 -> {
                     // Exit the DFA Menu
                     return;
-                default:
-                    System.out.println("Invalid input.");
+                }
+                default -> System.out.println("Invalid input.");
             }
         }
     }
@@ -216,6 +213,11 @@ public class Main {
         ArrayList<Node> nodes = new ArrayList<>();
         Scanner in = new Scanner(System.in);
 
+
+        System.out.println("Enter the alphabet of the DFA.");
+        String alphabet = in.nextLine();
+
+
         while (true){
             System.out.println("""
                     [1] Create new node
@@ -227,67 +229,10 @@ public class Main {
             int choice = Integer.parseInt(input);
 
             switch (choice) {
-                case 1 -> {
-                    // Create new node
-                    System.out.println("Enter the node ID.");
-                    input = in.nextLine();
-                    int id = Integer.parseInt(input);
-
-                    // Check if node ID already exists
-                    for (Node n : nodes) {
-                        if (n.getId() == id) {
-                            System.out.println("Node ID already exists.");
-                            break;
-                        }
-                    }
-                    System.out.println("Is this node an accepting state? (y/n)");
-                    input = in.nextLine();
-                    boolean accepting = input.equals("y");
-                    nodes.add(new Node(id, accepting));
-                }
-                case 2 -> {
-                    // Create new transition
-                    System.out.println("Enter the source node ID.");
-                    input = in.nextLine();
-                    int source = Integer.parseInt(input);
-                    Node sourceNode = null;
-
-                    // Check if source node exists
-                    for (Node n : nodes) {
-                        if (n.getId() == source) {
-                            sourceNode = n;
-                        }
-                    }
-                    if (sourceNode == null) {
-                        System.out.println("Source node not found.");
-                        break;
-                    }
-                    System.out.println("Enter the destination node ID.");
-                    input = in.nextLine();
-                    int dest = Integer.parseInt(input);
-                    Node destNode = null;
-
-                    // Check if destination node exists
-                    for (Node n : nodes) {
-                        if (n.getId() == dest) {
-                            destNode = n;
-                        }
-                    }
-                    if (destNode == null) {
-                        System.out.println("Destination node not found.");
-                        break;
-                    }
-
-                    // Get char to name the transition
-                    System.out.println("Enter the character to name the transition.");
-                    input = in.nextLine();
-                    while (input.length() != 1) {
-                        System.out.println("Invalid input. Please enter a single character.");
-                        input = in.nextLine();
-                    }
-                    char transitionName = input.charAt(0);
-                    sourceNode.addPointer(transitionName, destNode);
-                }
+                case 1 -> // Create new node
+                        createNode(nodes);
+                case 2 -> // Create new transition
+                        createTransition(nodes, alphabet);
                 case 3 -> {
                     // List nodes
                     for (Node n : nodes) {
@@ -318,7 +263,7 @@ public class Main {
                                 break;
                             }
 
-                            DFA newdfa = new DFA(startNode, nodes);
+                            DFA newdfa = new DFA(startNode, nodes, alphabet);
                             System.out.println("Your DFA has been successfully created.");
                             return newdfa;
                         } else if (input.equals("n")) {
@@ -332,6 +277,7 @@ public class Main {
                     System.out.println("Exiting DFA creator.");
                     return null;
                 }
+                default -> System.out.println("Invalid input.");
             }
         }
     }
@@ -345,6 +291,185 @@ public class Main {
             System.out.println("No active DFA. Please set an active DFA.");
             return;
         }
-        // TODO: Implement stepDFA
+        int i = 1;
+        String path = "";
+
+        while(true){
+            System.out.printf("[%d] Enter the character of the next transition. Or \"help\" for other options.", i++);
+            String input = in.nextLine();
+            if(input.equals("exit")){
+                // Exit the Step-by-Step DFA mode
+                if (activeDFA.isAcceptingState()){
+                    System.out.println("The DFA has accepted the input.");
+                } else {
+                    System.out.println("The DFA has rejected the input.");
+                }
+                System.out.printf("Path = %s", path);
+                return;
+
+            } else if (input.equals("help")){
+                // Display help menu
+                stepDFAhelper();
+                continue;
+
+            } else if (input.equals("reset")){
+                // Reset the DFA
+                activeDFA.reset();
+                path = "";
+                i = 1;
+                continue;
+
+            } else if (input.equals("view")){
+                // View information about the current node
+                System.out.printf("Current node = %s\n", activeDFA.getCurrentNode().getId());
+                System.out.printf("Path = %s\n", path);
+                System.out.println("Transitions:");
+                for(Pointers p : activeDFA.getCurrentNode().getPointers()){
+                    System.out.printf("%s -> %s\n", p.getName(), p.getNextNode().getId());
+                }
+                continue;
+
+            } else if (input.length() != 1){
+                System.out.println("Invalid input. Please enter a single character, or use \"help\" for other options.");
+                continue;
+            }
+
+            char c = input.charAt(0);
+            activeDFA.nextNode(c);
+            path += c;
+        }
+    }
+
+    private static void stepDFAhelper(){
+        System.out.println("""
+                "help" - Display this help message.
+                "reset" - Reset the DFA to the starting node.
+                "exit" - Exit the step-by-step DFA.
+                "view" - View the current DFA node.
+                """);
+    }
+
+    private static void dfaModifyMenu() {
+        Scanner in = new Scanner(System.in);
+        if (activeDFA == null) {
+            System.out.println("No active DFA. Please set an active DFA.");
+            return;
+        }
+        while (true) {
+            System.out.println("""
+                    [1] Add a node.
+                    [2] Add a transition.
+                    [3] List nodes.
+                    [4] Change node accepting state.
+                    [5] Exit.
+                    """);
+            System.out.println("Enter the number of the option you would like to select.");
+            String input = in.nextLine();
+            int option = Integer.parseInt(input);
+            switch (option) {
+                case 1 -> // Add a node
+                        createNode(activeDFA.getNodes());
+                case 2 -> // Add a transition
+                        createTransition(activeDFA.getNodes(), activeDFA.getAlphabet());
+                case 3 ->{
+                    // List nodes
+                    for (Node n : activeDFA.getNodes()) {
+                        System.out.println(n);
+                    }
+                }
+                case 4 -> {
+                    // Change node accepting state
+                    System.out.println("Enter the node ID.");
+                    input = in.nextLine();
+                    int id = Integer.parseInt(input);
+                    Node node = null;
+                    for (Node n : activeDFA.getNodes()) {
+                        if (n.getId() == id) {
+                            node = n;
+                        }
+                    }
+                    if (node == null) {
+                        System.out.println("Node not found.");
+                        break;
+                    }
+                    System.out.println("Is this node an accepting state? (y/n)");
+                    input = in.nextLine();
+                    boolean accepting = input.equals("y");
+                    node.setAcceptingState(accepting);
+                }
+                case 5 -> {
+                    // Exit
+                    System.out.println("Exiting DFA modifier.");
+                    return;
+                }
+            }
+        }
+    }
+
+    private static void createNode(ArrayList<Node> nodes){
+        // Create new node
+        Scanner in = new Scanner(System.in);
+        System.out.println("Enter the node ID.");
+        String input = in.nextLine();
+        int id = Integer.parseInt(input);
+
+        // Check if node ID already exists
+        for (Node n : nodes) {
+            if (n.getId() == id) {
+                System.out.println("Node ID already exists.");
+                return;
+            }
+        }
+        System.out.println("Is this node an accepting state? (y/n)");
+        input = in.nextLine();
+        boolean accepting = input.equals("y");
+        nodes.add(new Node(id, accepting));
+    }
+
+    public static void createTransition(ArrayList<Node> nodes, String alphabet){
+        Scanner in = new Scanner(System.in);
+        System.out.println("Enter the source node ID.");
+        String input = in.nextLine();
+
+        int source = Integer.parseInt(input);
+        Node sourceNode = null;
+
+        // Check if source node exists
+        for (Node n : nodes) {
+            if (n.getId() == source) {
+                sourceNode = n;
+            }
+        }
+        if (sourceNode == null) {
+            System.out.println("Source node not found.");
+            return;
+        }
+        System.out.println("Enter the destination node ID.");
+        input = in.nextLine();
+        int dest = Integer.parseInt(input);
+        Node destNode = null;
+
+        // Check if destination node exists
+        for (Node n : nodes) {
+            if (n.getId() == dest) {
+                destNode = n;
+            }
+        }
+        if (destNode == null) {
+            System.out.println("Destination node not found.");
+            return;
+        }
+
+        // Get char to name the transition
+        System.out.println("Enter the character to name the transition.");
+        input = in.nextLine();
+        while (input.length() != 1 || !alphabet.contains(input)) {
+            System.out.println("Invalid input. Please enter a single character from the alphabet.");
+            System.out.println("The alphabet is: " + alphabet);
+            input = in.nextLine();
+        }
+        char transitionName = input.charAt(0);
+        sourceNode.addPointer(transitionName, destNode);
+
     }
 }
